@@ -1,0 +1,38 @@
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Base de datos local (efímera en cloud)
+data/skynet.db
+data/*.db
+skynet.db
+*.db
+
+# CSV de auditoría legacy
+data/processed/historial_predicciones.csv
+
+# Modelos ML entrenados (pesados, se regeneran)
+ai/cerebro_mundial.pkl
+ai/*.pkl
+
+# Variables de entorno
+.env
+*.env
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb

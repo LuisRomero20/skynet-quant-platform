@@ -1,0 +1,65 @@
+Local,Visitante,Elo_Local,Elo_Visitante,Diferencia_Elo,Resultado_1X2
+Qatar,Ecuador,1500.0,1890.0,-390.0,2
+England,Iran,2055.0,1500.0,555.0,1
+Senegal,Netherlands,1500.0,1944.0,-444.0,2
+USA,Wales,1500.0,1500.0,0.0,X
+Argentina,Saudi Arabia,2128.0,1500.0,628.0,2
+Denmark,Tunisia,1869.0,1500.0,369.0,X
+Mexico,Poland,1896.0,1500.0,396.0,X
+France,Australia,2084.0,1500.0,584.0,1
+Morocco,Croatia,1500.0,1881.0,-381.0,X
+Germany,Japan,1939.0,1910.0,29.0,2
+Spain,Costa Rica,2129.0,1500.0,629.0,1
+Belgium,Canada,1879.0,1500.0,379.0,1
+Switzerland,Cameroon,1885.0,1500.0,385.0,1
+Uruguay,South Korea,1870.0,1500.0,370.0,X
+Portugal,Ghana,1967.0,1500.0,467.0,1
+Brazil,Serbia,1978.0,1500.0,478.0,1
+Wales,Iran,1500.0,1500.0,0.0,2
+Qatar,Senegal,1500.0,1500.0,0.0,2
+Netherlands,Ecuador,1944.0,1890.0,54.0,X
+England,USA,2055.0,1500.0,555.0,X
+Tunisia,Australia,1500.0,1500.0,0.0,2
+Poland,Saudi Arabia,1500.0,1500.0,0.0,1
+France,Denmark,2084.0,1869.0,215.0,1
+Argentina,Mexico,2128.0,1896.0,232.0,1
+Japan,Costa Rica,1910.0,1500.0,410.0,2
+Belgium,Morocco,1879.0,1500.0,379.0,2
+Croatia,Canada,1881.0,1500.0,381.0,1
+Spain,Germany,2129.0,1939.0,190.0,X
+Cameroon,Serbia,1500.0,1500.0,0.0,X
+South Korea,Ghana,1500.0,1500.0,0.0,2
+Brazil,Switzerland,1978.0,1885.0,93.0,1
+Portugal,Uruguay,1967.0,1870.0,97.0,1
+Netherlands,Qatar,1944.0,1500.0,444.0,1
+Ecuador,Senegal,1890.0,1500.0,390.0,2
+Iran,USA,1500.0,1500.0,0.0,2
+Wales,England,1500.0,2055.0,-555.0,2
+Australia,Denmark,1500.0,1869.0,-369.0,1
+Tunisia,France,1500.0,2084.0,-584.0,1
+Saudi Arabia,Mexico,1500.0,1896.0,-396.0,2
+Poland,Argentina,1500.0,2128.0,-628.0,2
+Croatia,Belgium,1881.0,1879.0,2.0,X
+Canada,Morocco,1500.0,1500.0,0.0,2
+Japan,Spain,1910.0,2129.0,-219.0,1
+Costa Rica,Germany,1500.0,1939.0,-439.0,2
+South Korea,Portugal,1500.0,1967.0,-467.0,1
+Ghana,Uruguay,1500.0,1870.0,-370.0,2
+Serbia,Switzerland,1500.0,1885.0,-385.0,2
+Cameroon,Brazil,1500.0,1978.0,-478.0,1
+Netherlands,USA,1944.0,1500.0,444.0,1
+Argentina,Australia,2128.0,1500.0,628.0,1
+France,Poland,2084.0,1500.0,584.0,1
+England,Senegal,2055.0,1500.0,555.0,1
+Japan,Croatia,1910.0,1881.0,29.0,X
+Brazil,South Korea,1978.0,1500.0,478.0,1
+Morocco,Spain,1500.0,2129.0,-629.0,X
+Portugal,Switzerland,1967.0,1885.0,82.0,1
+Croatia,Brazil,1881.0,1978.0,-97.0,X
+Netherlands,Argentina,1944.0,2128.0,-184.0,X
+Morocco,Portugal,1500.0,1967.0,-467.0,1
+England,France,2055.0,2084.0,-29.0,2
+Argentina,Croatia,2128.0,1881.0,247.0,1
+France,Morocco,2084.0,1500.0,584.0,1
+Croatia,Morocco,1881.0,1500.0,381.0,1
+Argentina,France,2128.0,2084.0,44.0,X
