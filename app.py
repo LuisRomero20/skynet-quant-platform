@@ -35,15 +35,15 @@ from core.backtesting import ejecutar_backtesting
 
 st.set_page_config(page_title="Skynet Quant Platform V4", page_icon="📈", layout="wide")
 
-st.html("""
+st.markdown("""
     <style>
-    .block-container { padding-top: 1.5rem; }
+    .block-container { padding-top: 2.5rem !important; }
     .stMetric { background-color: #0f172a; border: 1px solid #1e293b; padding: 15px; border-radius: 10px; }
     .sportsbook-box { background-color: #1e293b; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #3b82f6;}
     .badge-mdm { background-color: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
     .ml-box { background-color: #064e3b; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #10b981;}
     </style>
-""")
+""", unsafe_allow_html=True)
 
 st.title("🚀 SKYNET ANALYTICAL SPORTSBOOK")
 st.markdown("🤖 Modelo híbrido de Machine Learning y Poisson para pronósticos inteligentes de partidos internacionales.")
@@ -349,10 +349,18 @@ def cargar_partidos_mundial_historicos():
     except Exception:
         return pd.DataFrame(columns=['Fecha', 'Torneo', 'Local', 'Score Local', 'Score Visita', 'Visita'])
 
-@st.cache_resource
-def cargar_cerebro_ml(ruta_modelo, modelo_mtime):
-    if os.path.exists(ruta_modelo):
-        modelo_data = joblib.load(ruta_modelo)
+@st.cache_resource(show_spinner="🧠 Entrenando Skynet ML por primera vez (~60s)...")
+def cargar_o_entrenar_cerebro_ml():
+    ruta = os.path.join(ROOT_DIR, 'ai', 'cerebro_mundial.pkl')
+    if not os.path.exists(ruta):
+        try:
+            from ai.entrenador import entrenar_modelo_mundial
+            entrenar_modelo_mundial()
+        except Exception as e:
+            st.warning(f"No se pudo entrenar el modelo ML: {e}")
+            return None
+    if os.path.exists(ruta):
+        modelo_data = joblib.load(ruta)
         if isinstance(modelo_data, dict) and 'model' in modelo_data:
             return modelo_data
         return {'model': modelo_data, 'accuracy': None, 'features': None}
@@ -384,9 +392,7 @@ def obtener_partidos_mundial_futuros():
 df_stats = cargar_footystats()
 dict_elo = cargar_datos_elo()
 lista_partidos = obtener_partidos_mundial_futuros()
-ruta_modelo_ml = os.path.join(ROOT_DIR, 'ai', 'cerebro_mundial.pkl')
-modelo_mtime = os.path.getmtime(ruta_modelo_ml) if os.path.exists(ruta_modelo_ml) else None
-modelo_ml_data = cargar_cerebro_ml(ruta_modelo_ml, modelo_mtime)
+modelo_ml_data = cargar_o_entrenar_cerebro_ml()
 modelo_ml = modelo_ml_data['model'] if modelo_ml_data is not None else None
 modelo_ml_accuracy = modelo_ml_data.get('accuracy') if modelo_ml_data is not None else None
 
@@ -565,9 +571,6 @@ if partido_seleccionado and " vs " in partido_seleccionado:
                 alineacion = max(0.0, min(1.0, 1.0 - diff_sum / 2.0))
             except Exception:
                 st.warning("El modelo está calibrando...")
-        else:
-            st.info("Esperando selección de partido para activar Skynet ML.")
-
         total_corners = c_l + c_v
         total_tarjetas = t_l + t_v
 
