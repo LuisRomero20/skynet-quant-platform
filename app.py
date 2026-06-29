@@ -272,6 +272,8 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
             continue
 
 
+@st.cache_data
+def cargar_results_git():
     try:
         url_git = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
         df = pd.read_csv(url_git)
