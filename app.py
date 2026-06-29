@@ -29,6 +29,7 @@ from core.database import (
     buscar_o_crear_prediccion,
     tiene_resultado,
     obtener_predicciones_auditoria,
+    obtener_partidos_sin_resultado,
 )
 from core.backtesting import ejecutar_backtesting
 
@@ -242,7 +243,8 @@ def _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
         ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
         ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
     )
-    hist = df_results[mask & (df_results['date'] < hoy)].copy()
+    # <= hoy para incluir partidos jugados hoy
+    hist = df_results[mask & (df_results['date'] <= hoy)].copy()
     if hist.empty:
         return
     row = hist.sort_values('date', ascending=False).iloc[0]
@@ -256,7 +258,8 @@ def _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
 
 def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo):
     """Genera y persiste predicciones para todos los partidos del fixture al arrancar."""
-    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    hoy = pd.Timestamp(datetime.now().date())
+    fecha_hoy = hoy.strftime('%Y-%m-%d')
     for partido_str in lista_partidos:
         if ' vs ' not in partido_str:
             continue
@@ -264,8 +267,20 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
             local_crudo, visitante_crudo = partido_str.split(' vs ', 1)
             local = normalizar_pais(local_crudo)
             visitante = normalizar_pais(visitante_crudo)
+
+            # Usar la fecha real del partido en el fixture; fallback = hoy
+            fecha_partido = fecha_hoy
+            if df_results is not None and not df_results.empty:
+                mask_fut = (
+                    ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
+                    ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
+                ) & (df_results['date'] >= hoy)
+                fut = df_results[mask_fut]
+                if not fut.empty:
+                    fecha_partido = fut.sort_values('date').iloc[0]['date'].strftime('%Y-%m-%d')
+
             pred, prob, confianza = _predecir_poisson(local, visitante, df_results, df_stats, dict_elo)
-            partido_id = buscar_o_crear_partido(fecha_hoy, local, visitante, 'World Cup', 'programado')
+            partido_id = buscar_o_crear_partido(fecha_partido, local, visitante, 'World Cup', 'programado')
             buscar_o_crear_prediccion(partido_id, 'poisson', pred, prob, confianza)
             _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
         except Exception:
@@ -380,6 +395,11 @@ if 'predicciones_generadas' not in st.session_state:
     _df_results_batch = cargar_results_git()
     _generar_predicciones_fixture(lista_partidos, _df_results_batch, df_stats, dict_elo)
     st.session_state['predicciones_generadas'] = True
+
+# Sincronizar resultados en cada carga (rápido: sólo DB + datos ya en caché)
+_df_results_sync = cargar_results_git()
+for _pid, _local, _visitante in obtener_partidos_sin_resultado():
+    _persistir_resultado_si_disponible(_pid, _local, _visitante, _df_results_sync)
 
 # ==========================================
 # 2. LÓGICA DE EXTRACCIÓN Y PREDICCIÓN

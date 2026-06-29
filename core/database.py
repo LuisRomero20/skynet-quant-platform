@@ -167,6 +167,23 @@ def tiene_resultado(partido_id: int) -> bool:
         conn.close()
 
 
+def obtener_partidos_sin_resultado() -> list:
+    """Devuelve lista de (partido_id, local, visitante) que aun no tienen resultado."""
+    crear_esquema()
+    conn = sqlite3.connect(_get_db_path())
+    try:
+        return conn.execute(
+            """
+            SELECT pm.id, pm.local, pm.visitante
+            FROM partidos pm
+            LEFT JOIN resultados r ON r.partido_id = pm.id
+            WHERE r.id IS NULL
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 def obtener_predicciones_auditoria() -> list:
     """Devuelve todas las predicciones desde la DB, una por partido, con resultado si está disponible."""
     crear_esquema()
@@ -182,6 +199,11 @@ def obtener_predicciones_auditoria() -> list:
             FROM predicciones p
             JOIN partidos pm ON p.partido_id = pm.id
             LEFT JOIN resultados r ON r.partido_id = p.partido_id
+            WHERE pm.id = (
+                SELECT MAX(pm2.id)
+                FROM partidos pm2
+                WHERE pm2.local = pm.local AND pm2.visitante = pm.visitante
+            )
             ORDER BY pm.fecha DESC, pm.local
             """
         ).fetchall()
