@@ -175,8 +175,103 @@ def _resultado_real_historico(row, local, visitante):
     return 'Empate'
 
 
-@st.cache_data
-def cargar_results_git():
+def _get_metric(df_team, col):
+    if df_team is not None and not df_team.empty and col in df_team.columns:
+        return df_team[col].values[0]
+    return np.nan
+
+
+def _get_avg_metric(df_team, col):
+    valor = _get_metric(df_team, col)
+    partidos = _get_metric(df_team, 'P')
+    if pd.isna(valor) or pd.isna(partidos) or partidos == 0:
+        return np.nan
+    return float(valor) / float(partidos)
+
+
+def _predecir_poisson(local, visitante, df_results, df_stats, dict_elo):
+    """Calcula predicción Poisson pura para un partido. Devuelve (prediccion, prob, confianza)."""
+    stats_l = df_stats[df_stats['Country'].apply(normalizar_country_footystats) == local] if df_stats is not None else None
+    stats_v = df_stats[df_stats['Country'].apply(normalizar_country_footystats) == visitante] if df_stats is not None else None
+
+    xg_l_fs = _get_avg_metric(stats_l, 'xG')
+    xg_v_fs = _get_avg_metric(stats_v, 'xG')
+
+    elo_base_l = float(dict_elo.get(local, 1600))
+    elo_base_v = float(dict_elo.get(visitante, 1500))
+    diferencia_elo = elo_base_l - elo_base_v
+
+    hoy = pd.Timestamp(datetime.now().date())
+    home_goals, home_conceded, home_win_rate = _team_recent_stats(df_results, local, hoy, n=3)
+    away_goals, away_conceded, away_win_rate = _team_recent_stats(df_results, visitante, hoy, n=3)
+    home_goal_diff = home_goals - home_conceded
+    away_goal_diff = away_goals - away_conceded
+
+    if not np.isnan(xg_l_fs) and not np.isnan(xg_v_fs):
+        xg_l_final = max(0.1, 0.5 * xg_l_fs + 0.2 * home_goals + 0.15 * home_win_rate + 0.1 * home_goal_diff + 0.05 * max(diferencia_elo / 100, 0))
+        xg_v_final = max(0.1, 0.5 * xg_v_fs + 0.2 * away_goals + 0.15 * away_win_rate + 0.1 * away_goal_diff + 0.05 * max(-diferencia_elo / 100, 0))
+    else:
+        ventaja = (diferencia_elo / 100) * 0.25
+        xg_l_final = max(0.1, 1.3 + ventaja)
+        xg_v_final = max(0.1, 1.3 - ventaja)
+
+    prob_l = [poisson.pmf(i, xg_l_final) for i in range(6)]
+    prob_v = [poisson.pmf(i, xg_v_final) for i in range(6)]
+    matriz = np.outer(prob_l, prob_v)
+    p_local = float(np.sum(np.tril(matriz, -1)))
+    p_empate = float(np.sum(np.diag(matriz)))
+    p_visitante = float(np.sum(np.triu(matriz, 1)))
+
+    if p_local >= p_empate and p_local >= p_visitante:
+        pred, prob = f'Victoria {local}', p_local
+    elif p_visitante > p_empate:
+        pred, prob = f'Victoria {visitante}', p_visitante
+    else:
+        pred, prob = 'Empate', p_empate
+
+    confianza = 'Alta' if prob >= 0.4 else 'Media' if prob >= 0.25 else 'Baja'
+    return pred, prob, confianza
+
+
+def _persistir_resultado_si_disponible(partido_id, local, visitante, df_results):
+    """Si el partido ya se jugó (2026) y no tiene resultado guardado, lo guarda."""
+    if df_results is None or df_results.empty or tiene_resultado(partido_id):
+        return
+    hoy = pd.Timestamp(datetime.now().date())
+    mask = (
+        ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
+        ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
+    )
+    hist = df_results[mask & (df_results['date'] < hoy)].copy()
+    if hist.empty:
+        return
+    row = hist.sort_values('date', ascending=False).iloc[0]
+    if row['date'] < pd.Timestamp('2026-06-01'):
+        return
+    resultado = _resultado_real_historico(row, local, visitante)
+    if resultado:
+        guardar_resultado(partido_id, resultado, 1.0)
+        actualizar_estado_partido(partido_id, 'jugado')
+
+
+def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo):
+    """Genera y persiste predicciones para todos los partidos del fixture al arrancar."""
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    for partido_str in lista_partidos:
+        if ' vs ' not in partido_str:
+            continue
+        try:
+            local_crudo, visitante_crudo = partido_str.split(' vs ', 1)
+            local = normalizar_pais(local_crudo)
+            visitante = normalizar_pais(visitante_crudo)
+            pred, prob, confianza = _predecir_poisson(local, visitante, df_results, df_stats, dict_elo)
+            partido_id = buscar_o_crear_partido(fecha_hoy, local, visitante, 'World Cup', 'programado')
+            buscar_o_crear_prediccion(partido_id, 'poisson', pred, prob, confianza)
+            _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
+        except Exception:
+            continue
+
+
     try:
         url_git = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
         df = pd.read_csv(url_git)
@@ -278,6 +373,12 @@ modelo_ml_data = cargar_cerebro_ml(ruta_modelo_ml, modelo_mtime)
 modelo_ml = modelo_ml_data['model'] if modelo_ml_data is not None else None
 modelo_ml_accuracy = modelo_ml_data.get('accuracy') if modelo_ml_data is not None else None
 
+# Generar predicciones para todo el fixture al arrancar (solo una vez por sesión)
+if 'predicciones_generadas' not in st.session_state:
+    _df_results_batch = cargar_results_git()
+    _generar_predicciones_fixture(lista_partidos, _df_results_batch, df_stats, dict_elo)
+    st.session_state['predicciones_generadas'] = True
+
 # ==========================================
 # 2. LÓGICA DE EXTRACCIÓN Y PREDICCIÓN
 # ==========================================
@@ -312,17 +413,12 @@ if partido_seleccionado and " vs " in partido_seleccionado:
         # 2. Obtener Métricas y ELO
         stats_l = df_stats[df_stats['Country'].apply(normalizar_country_footystats) == local] if df_stats is not None else None
         stats_v = df_stats[df_stats['Country'].apply(normalizar_country_footystats) == visitante] if df_stats is not None else None
-        
+
         def get_metric(df_team, col):
-            if df_team is not None and not df_team.empty and col in df_team.columns: return df_team[col].values[0]
-            return np.nan
+            return _get_metric(df_team, col)
 
         def get_avg_metric(df_team, col):
-            valor = get_metric(df_team, col)
-            partidos = get_metric(df_team, 'P')
-            if pd.isna(valor) or pd.isna(partidos) or partidos == 0:
-                return np.nan
-            return float(valor) / float(partidos)
+            return _get_avg_metric(df_team, col)
 
         xg_l_fs, xg_v_fs = get_avg_metric(stats_l, 'xG'), get_avg_metric(stats_v, 'xG')
         c_l, c_v = get_avg_metric(stats_l, 'Corners'), get_avg_metric(stats_v, 'Corners')
@@ -384,28 +480,8 @@ if partido_seleccionado and " vs " in partido_seleccionado:
         )
 
         resultado_real = None
-        if df_results is not None and not df_results.empty and not tiene_resultado(partido_id):
-            hoy = pd.Timestamp(datetime.now().date())
-            mask = (
-                ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
-                ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
-            )
-            partidos_hist = df_results[mask & (df_results['date'] < hoy)].copy()
-            if not partidos_hist.empty:
-                partidos_hist = partidos_hist.sort_values('date', ascending=False)
-                row = partidos_hist.iloc[0]
-                fecha_partido = row['date']
-                # Solo usar resultados del Mundial 2026 (a partir de junio 2026)
-                if pd.notna(row.get('home_score')) and pd.notna(row.get('away_score')) and fecha_partido >= pd.Timestamp('2026-06-01'):
-                    if int(row['home_score']) > int(row['away_score']):
-                        resultado_real = f"Victoria {local}"
-                    elif int(row['home_score']) < int(row['away_score']):
-                        resultado_real = f"Victoria {visitante}"
-                    else:
-                        resultado_real = "Empate"
-                    actualizar_resultado_prediccion(local, visitante, resultado_real, fecha=fecha_partido.strftime('%Y-%m-%d'))
-                    guardar_resultado(partido_id, resultado_real, 1.0)
-                    actualizar_estado_partido(partido_id, 'jugado')
+        if df_results is not None and not df_results.empty:
+            _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
 
         # 4. MOTOR MACHINE LEARNING (Random Forest)
         p_local_ml, p_empate_ml, p_visitante_ml = 0, 0, 0
