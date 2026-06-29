@@ -1,9 +1,10 @@
 import os
 import logging
-from dotenv import load_dotenv
-
-# 1. Cargar la bóveda secreta (.env)
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # 2. Configurar el Sistema de Logging Profesional
 logging.basicConfig(
