@@ -35,7 +35,7 @@ from core.backtesting import ejecutar_backtesting
 
 st.set_page_config(page_title="Skynet Quant Platform V4", page_icon="📈", layout="wide")
 
-st.markdown("""
+st.html("""
     <style>
     .block-container { padding-top: 1.5rem; }
     .stMetric { background-color: #0f172a; border: 1px solid #1e293b; padding: 15px; border-radius: 10px; }
@@ -43,7 +43,7 @@ st.markdown("""
     .badge-mdm { background-color: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
     .ml-box { background-color: #064e3b; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #10b981;}
     </style>
-""", unsafe_allow_html=True)
+""")
 
 st.title("🚀 SKYNET ANALYTICAL SPORTSBOOK")
 st.markdown("🤖 Modelo híbrido de Machine Learning y Poisson para pronósticos inteligentes de partidos internacionales.")
@@ -579,12 +579,12 @@ if partido_seleccionado and " vs " in partido_seleccionado:
     with tab_ml:
         if modelo_ml:
             accuracy_text = f"{modelo_ml_accuracy * 100:.2f}%" if modelo_ml_accuracy is not None else "N/A"
-            st.markdown(f"""
+            st.html(f"""
             <div class="ml-box">
                 <h4 style='color: white; margin-top:0px;'>🤖 Skynet Random Forest (Accuracy: {accuracy_text})</h4>
                 <p style='color: #a7f3d0;'>Basado en Rankings ELO, resultados históricos y métricas recientes de goles y penales.</p>
             </div>
-            """, unsafe_allow_html=True)
+            """)
             
             st.write("")
             c1, c2, c3 = st.columns(3)
@@ -626,7 +626,7 @@ if partido_seleccionado and " vs " in partido_seleccionado:
     with tab_mercados:
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown(f"""
+            st.html(f"""
             <div class="sportsbook-box">
                 <h4 style='margin-top:0px;'>🚩 Tiros de Esquina Promedio</h4>
                 <p><strong>{local}:</strong> {c_l:.2f}</p>
@@ -634,10 +634,10 @@ if partido_seleccionado and " vs " in partido_seleccionado:
                 <hr>
                 <h3 style='color:{"#3b82f6" if pd.notna(total_corners) else "#ef4444"};'>Línea: Más de {int(total_corners - 1) if pd.notna(total_corners) else 0}.5</h3>
             </div>
-            """, unsafe_allow_html=True)
+            """)
             
         with col2:
-            st.markdown(f"""
+            st.html(f"""
             <div class="sportsbook-box">
                 <h4 style='margin-top:0px;'>🟨 Tarjetas Mostradas Promedio</h4>
                 <p><strong>{local}:</strong> {t_l:.2f}</p>
@@ -645,7 +645,7 @@ if partido_seleccionado and " vs " in partido_seleccionado:
                 <hr>
                 <h3 style='color:{"#ef4444" if pd.notna(total_tarjetas) else "#ef4444"};'>Línea: Más de {int(total_tarjetas - 0.5) if pd.notna(total_tarjetas) else 0}.5</h3>
             </div>
-            """, unsafe_allow_html=True)
+            """)
 
         def _safe_int(val):
             try:
