@@ -3,15 +3,15 @@ Switzerland National Team,3,1.78,19,3,2.33
 Austria National Team,3,1.13,10,4,1.33
 Spain National Team,3,2.16,23,2,2.33
 Portugal National Team,3,1.48,10,4,1.67
-Norway National Team,3,1.38,14,1,2.0
-Germany National Team,3,2.14,18,1,2.0
+Norway National Team,4,1.36,17,2,2.25
+Germany National Team,4,2.29,34,3,1.75
 England National Team,3,2.12,24,2,2.33
 Belgium National Team,3,2.55,14,5,1.67
-Netherlands National Team,3,1.78,13,3,2.33
-France National Team,3,1.99,15,1,3.0
+Netherlands National Team,4,1.53,18,3,2.0
+France National Team,4,2.21,24,1,3.0
 Croatia National Team,3,1.05,7,2,2.0
 Scotland National Team,3,1.06,12,5,1.0
-Japan National Team,3,1.14,11,1,1.67
+Japan National Team,4,1.03,13,4,1.25
 Jordan National Team,3,0.94,6,4,0.0
 Australia National Team,3,1.1,12,5,1.33
 Saudi Arabia National Team,3,0.75,7,6,0.67
@@ -19,12 +19,12 @@ Qatar National Team,3,0.63,9,8,0.33
 Iran National Team,3,1.32,8,6,1.0
 Uzbekistan National Team,3,0.74,9,4,0.0
 South Korea National Team,3,1.35,12,4,1.0
-Ivory Coast National Team,3,1.27,12,4,2.0
+Ivory Coast National Team,4,1.36,26,4,1.5
 Argentina National Team,3,1.32,9,2,3.0
 Uruguay National Team,3,1.82,26,7,0.67
 Ecuador National Team,3,1.85,17,5,1.33
 Ghana National Team,3,0.59,6,3,1.33
-Brazil National Team,3,1.59,16,5,2.33
+Brazil National Team,4,1.77,22,7,2.5
 United States Men's National Team,3,1.75,19,5,2.0
 Mexico National Team,3,1.23,4,4,3.0
 Algeria National Team,3,1.47,12,1,1.33
@@ -34,15 +34,15 @@ Canada National Team,4,2.2,39,7,1.75
 South Africa National Team,4,1.02,11,9,1.0
 Haiti National Team,3,1.05,9,7,0.0
 Curaao National Team,3,0.97,5,7,0.33
-Paraguay National Team,3,0.76,2,9,1.33
-Morocco National Team,3,1.75,16,1,2.33
+Paraguay National Team,4,0.81,8,11,1.25
+Morocco National Team,4,1.66,24,2,2.0
 Egypt National Team,3,1.63,18,6,1.67
 Tunisia National Team,3,0.73,9,1,0.0
 Panama National Team,3,1.18,12,5,0.0
 New Zealand National Team,3,1.29,10,4,0.33
 Cape Verde Islands National Team,3,1.05,9,4,1.0
 Czech Republic National Team,3,1.15,15,1,0.33
-Sweden National Team,3,1.69,17,5,1.33
+Sweden National Team,4,1.46,18,5,1.0
 Turkey National Team,3,2.52,22,2,1.0
 Bosnia Herzegovina National Team,3,1.04,12,8,1.33
 Iraq National Team,3,0.67,7,6,0.0
