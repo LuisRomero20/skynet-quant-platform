@@ -287,7 +287,7 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
             continue
 
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def cargar_results_git():
     try:
         url_git = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
@@ -697,9 +697,20 @@ if partido_seleccionado and " vs " in partido_seleccionado:
             st.info("No se encontraron partidos del Mundial con resultados cerrados.")
 
     with tab_auditoria:
+        col_ref1, col_ref2 = st.columns([4, 1])
+        with col_ref2:
+            if st.button("🔄 Forzar actualización", use_container_width=True):
+                cargar_results_git.clear()
+                _df_force = cargar_results_git()
+                for _pid2, _loc2, _vis2 in obtener_partidos_sin_resultado():
+                    _persistir_resultado_si_disponible(_pid2, _loc2, _vis2, _df_force)
+                st.rerun()
         registros = obtener_predicciones_auditoria()
         if registros:
             df_auditoria = pd.DataFrame(registros)
+            total_r = len(df_auditoria)
+            resueltos = df_auditoria[df_auditoria['Resultado_Real'] != 'Pendiente'].shape[0]
+            st.caption(f"Total: {total_r} predicciones · {resueltos} resueltas · {total_r - resueltos} pendientes")
             st.dataframe(df_auditoria, use_container_width=True, hide_index=True)
         else:
             st.info("Aún no hay predicciones registradas.")
