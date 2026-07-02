@@ -268,16 +268,16 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
             local = normalizar_pais(local_crudo)
             visitante = normalizar_pais(visitante_crudo)
 
-            # Usar la fecha real del partido en el fixture; fallback = hoy
+            # Usar la fecha real del partido (pasado o futuro); fallback = hoy
             fecha_partido = fecha_hoy
             if df_results is not None and not df_results.empty:
-                mask_fut = (
+                mask_wc = (
                     ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
                     ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
-                ) & (df_results['date'] >= hoy)
-                fut = df_results[mask_fut]
-                if not fut.empty:
-                    fecha_partido = fut.sort_values('date').iloc[0]['date'].strftime('%Y-%m-%d')
+                ) & df_results['tournament'].str.lower().str.contains('world cup', na=False)
+                wc_matches = df_results[mask_wc]
+                if not wc_matches.empty:
+                    fecha_partido = wc_matches.sort_values('date').iloc[0]['date'].strftime('%Y-%m-%d')
 
             pred, prob, confianza = _predecir_poisson(local, visitante, df_results, df_stats, dict_elo)
             partido_id = buscar_o_crear_partido(fecha_partido, local, visitante, 'World Cup', 'programado')
@@ -388,6 +388,27 @@ def obtener_partidos_mundial_futuros():
     except Exception:
         return ["Error de red"]
 
+@st.cache_data(ttl=3600)
+def obtener_todos_los_partidos_mundial():
+    """Todos los partidos del Mundial 2026 (pasados + futuros) para el batch completo."""
+    try:
+        df = cargar_results_git()
+        if df.empty:
+            return []
+        wc = df[
+            (df['date'] >= pd.Timestamp('2026-06-01')) &
+            (df['date'] <= pd.Timestamp('2026-07-19')) &
+            df['tournament'].str.lower().str.contains('world cup', na=False)
+        ]
+        partidos = []
+        for _, row in wc.sort_values('date').iterrows():
+            partido = f"{row['home_team']} vs {row['away_team']}"
+            if partido not in partidos:
+                partidos.append(partido)
+        return partidos
+    except Exception:
+        return []
+
 # Inicializar recursos
 df_stats = cargar_footystats()
 dict_elo = cargar_datos_elo()
@@ -396,10 +417,11 @@ modelo_ml_data = cargar_o_entrenar_cerebro_ml()
 modelo_ml = modelo_ml_data['model'] if modelo_ml_data is not None else None
 modelo_ml_accuracy = modelo_ml_data.get('accuracy') if modelo_ml_data is not None else None
 
-# Generar predicciones para todo el fixture al arrancar (solo una vez por sesión)
+# Generar predicciones para TODO el fixture del Mundial al arrancar (solo una vez por sesión)
 if 'predicciones_generadas' not in st.session_state:
     _df_results_batch = cargar_results_git()
-    _generar_predicciones_fixture(lista_partidos, _df_results_batch, df_stats, dict_elo)
+    _todos_los_partidos = obtener_todos_los_partidos_mundial()
+    _generar_predicciones_fixture(_todos_los_partidos, _df_results_batch, df_stats, dict_elo)
     st.session_state['predicciones_generadas'] = True
 
 # Sincronizar resultados en cada carga (rápido: sólo DB + datos ya en caché)
