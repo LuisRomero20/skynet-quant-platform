@@ -81,6 +81,30 @@ def cargar_datos_elo():
     return {}
 
 @st.cache_data
+def cargar_fixture_local():
+    """Carga el fixture completo del Mundial 2026 desde el CSV local de FootyStats.
+    Retorna un DataFrame con columnas: date, home_team, away_team, home_score, away_score, status.
+    Los nombres de equipo ya están normalizados con normalizar_pais.
+    """
+    ruta = os.path.join(ROOT_DIR, 'data', 'international-world-cup-matches-2026-to-2026-stats.csv')
+    if not os.path.exists(ruta):
+        return pd.DataFrame()
+    try:
+        df = pd.read_csv(ruta)
+        # Parsear fecha desde "Jul 02 2026 - 7:00pm"
+        df['date'] = pd.to_datetime(
+            df['date_GMT'].str.extract(r'^(\w+ \d+ \d+)')[0],
+            format='%b %d %Y', errors='coerce'
+        )
+        df['home_team'] = df['home_team_name'].apply(normalizar_pais)
+        df['away_team']  = df['away_team_name'].apply(normalizar_pais)
+        df['home_score'] = pd.to_numeric(df['home_team_goal_count'], errors='coerce')
+        df['away_score'] = pd.to_numeric(df['away_team_goal_count'], errors='coerce')
+        return df[['date', 'home_team', 'away_team', 'home_score', 'away_score', 'status']].copy()
+    except Exception:
+        return pd.DataFrame()
+
+@st.cache_data
 def normalizar_country_footystats(country_name):
     if country_name is None:
         return ''
@@ -234,6 +258,28 @@ def _predecir_poisson(local, visitante, df_results, df_stats, dict_elo):
     return pred, prob, confianza
 
 
+def _persistir_resultado_desde_local(partido_id, local, visitante, df_local):
+    """Guarda el resultado desde el CSV local de FootyStats si el partido está completo."""
+    if df_local is None or df_local.empty or tiene_resultado(partido_id):
+        return
+    mask = (
+        ((df_local['home_team'] == local) & (df_local['away_team'] == visitante)) |
+        ((df_local['home_team'] == visitante) & (df_local['away_team'] == local))
+    ) & (df_local['status'] == 'complete')
+    completados = df_local[mask & df_local['home_score'].notna() & df_local['away_score'].notna()]
+    if completados.empty:
+        return
+    row = completados.sort_values('date', ascending=False).iloc[0]
+    resultado = _resultado_real_historico(
+        {'home_team': row['home_team'], 'away_team': row['away_team'],
+         'home_score': row['home_score'], 'away_score': row['away_score']},
+        local, visitante
+    )
+    if resultado:
+        guardar_resultado(partido_id, resultado, 1.0)
+        actualizar_estado_partido(partido_id, 'jugado')
+
+
 def _persistir_resultado_si_disponible(partido_id, local, visitante, df_results):
     """Si el partido ya se jugó (2026) y no tiene resultado guardado, lo guarda."""
     if df_results is None or df_results.empty or tiene_resultado(partido_id):
@@ -258,8 +304,19 @@ def _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
 
 def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo):
     """Genera y persiste predicciones para todos los partidos del fixture al arrancar."""
+    # CSV local como fuente canónica de fechas del Mundial 2026
+    df_local = cargar_fixture_local()
+    fecha_local_map = {}
+    if not df_local.empty:
+        for _, row in df_local.iterrows():
+            if pd.notna(row['date']):
+                key = (row['home_team'], row['away_team'])
+                fecha_local_map[key] = row['date'].strftime('%Y-%m-%d')
+                fecha_local_map[(row['away_team'], row['home_team'])] = row['date'].strftime('%Y-%m-%d')
+
     hoy = pd.Timestamp(datetime.now().date())
     fecha_hoy = hoy.strftime('%Y-%m-%d')
+
     for partido_str in lista_partidos:
         if ' vs ' not in partido_str:
             continue
@@ -268,9 +325,12 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
             local = normalizar_pais(local_crudo)
             visitante = normalizar_pais(visitante_crudo)
 
-            # Usar la fecha real del partido (pasado o futuro); fallback = hoy
-            fecha_partido = fecha_hoy
-            if df_results is not None and not df_results.empty:
+            # 1º: buscar fecha en CSV local (fuente más fiable)
+            fecha_partido = fecha_local_map.get((local, visitante)) or \
+                            fecha_local_map.get((visitante, local))
+
+            # 2º: fallback en GitHub (solo partidos del Mundial 2026)
+            if fecha_partido is None and df_results is not None and not df_results.empty:
                 mask_wc = (
                     ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
                     ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
@@ -280,10 +340,17 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
                 if not wc_matches.empty:
                     fecha_partido = wc_matches.sort_values('date').iloc[0]['date'].strftime('%Y-%m-%d')
 
+            # 3º: último recurso = hoy
+            if fecha_partido is None:
+                fecha_partido = fecha_hoy
+
             pred, prob, confianza = _predecir_poisson(local, visitante, df_results, df_stats, dict_elo)
             partido_id = buscar_o_crear_partido(fecha_partido, local, visitante, 'World Cup', 'programado')
             buscar_o_crear_prediccion(partido_id, 'poisson', pred, prob, confianza)
-            _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
+            # Persistir resultado si el partido ya está completo en el CSV local
+            _persistir_resultado_desde_local(partido_id, local, visitante, df_local)
+            if df_results is not None:
+                _persistir_resultado_si_disponible(partido_id, local, visitante, df_results)
         except Exception:
             continue
 
@@ -323,27 +390,52 @@ def cargar_goalscorers_git():
 
 @st.cache_data
 def cargar_partidos_mundial_historicos():
+    """Retorna todos los partidos del Mundial con resultado.
+    Usa el CSV local como fuente primaria (más actualizado) y complementa con GitHub.
+    """
     try:
-        df = cargar_results_git()
-        if df is None or df.empty:
-            return pd.DataFrame(columns=['Fecha', 'Torneo', 'Local', 'Score Local', 'Score Visita', 'Visita'])
-
-        df = df.copy()
-        df['date'] = pd.to_datetime(df['date'], errors='coerce')
         hoy = pd.Timestamp(datetime.now().date())
-        mundiales = df[(df['date'] <= hoy) & df['tournament'].fillna('').str.lower().str.contains('world cup', na=False)]
-        mundiales = mundiales.sort_values('date', ascending=False)
+        filas = []
+
+        # ── Fuente 1: CSV local de FootyStats (más actualizado) ──
+        df_local = cargar_fixture_local()
+        if not df_local.empty:
+            completados = df_local[
+                (df_local['status'] == 'complete') &
+                (df_local['home_score'].notna()) &
+                (df_local['away_score'].notna())
+            ].copy()
+            for _, row in completados.iterrows():
+                filas.append({
+                    'Fecha': row['date'].strftime('%Y-%m-%d') if pd.notna(row['date']) else '',
+                    'Torneo': 'FIFA World Cup 2026',
+                    'Local': row['home_team'],
+                    'Score Local': int(row['home_score']),
+                    'Score Visita': int(row['away_score']),
+                    'Visita': row['away_team'],
+                })
+
+        if filas:
+            df_out = pd.DataFrame(filas).sort_values('Fecha', ascending=False).reset_index(drop=True)
+            return df_out
+
+        # ── Fuente 2: GitHub (fallback) ──
+        df_git = cargar_results_git()
+        if df_git is None or df_git.empty:
+            return pd.DataFrame(columns=['Fecha', 'Torneo', 'Local', 'Score Local', 'Score Visita', 'Visita'])
+        df_git = df_git.copy()
+        df_git['date'] = pd.to_datetime(df_git['date'], errors='coerce')
+        mundiales = df_git[
+            (df_git['date'] <= hoy) &
+            df_git['tournament'].fillna('').str.lower().str.contains('world cup', na=False) &
+            df_git['home_score'].notna()
+        ].sort_values('date', ascending=False)
         if mundiales.empty:
             return pd.DataFrame(columns=['Fecha', 'Torneo', 'Local', 'Score Local', 'Score Visita', 'Visita'])
-
         mundiales = mundiales[['date', 'tournament', 'home_team', 'home_score', 'away_score', 'away_team']].copy()
         mundiales = mundiales.rename(columns={
-            'date': 'Fecha',
-            'tournament': 'Torneo',
-            'home_team': 'Local',
-            'home_score': 'Score Local',
-            'away_score': 'Score Visita',
-            'away_team': 'Visita'
+            'date': 'Fecha', 'tournament': 'Torneo', 'home_team': 'Local',
+            'home_score': 'Score Local', 'away_score': 'Score Visita', 'away_team': 'Visita'
         })
         mundiales['Fecha'] = mundiales['Fecha'].dt.strftime('%Y-%m-%d')
         return mundiales
@@ -367,31 +459,64 @@ def cargar_o_entrenar_cerebro_ml():
         return {'model': modelo_data, 'accuracy': None, 'features': None}
     return None
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1800)
 def obtener_partidos_mundial_futuros():
-    try:
-        df = cargar_results_git()
-        if df.empty:
-            return ["No se encontraron partidos del Mundial."]
+    """Retorna los partidos del Mundial 2026 aún no jugados.
+    Prefiere el CSV local (más fiable); cae en GitHub como respaldo.
+    """
+    hoy = pd.Timestamp(datetime.now().date())
 
-        hoy = pd.Timestamp(datetime.now().date())
-        futuros = df[(df['date'] >= hoy) & df['tournament'].str.lower().str.contains('world cup', na=False)]
-        if futuros.empty:
-            futuros = df[df['date'] >= hoy]
-
+    # ── Fuente primaria: CSV local ──
+    df_local = cargar_fixture_local()
+    if not df_local.empty:
+        futuros = df_local[
+            (df_local['status'] == 'incomplete') |
+            (df_local['date'] >= hoy)
+        ].copy()
+        # Solo los que aún no tienen resultado completo
+        futuros = futuros[df_local['status'] != 'complete']
         partidos = []
         for _, row in futuros.sort_values('date').iterrows():
             partido = f"{row['home_team']} vs {row['away_team']}"
             if partido not in partidos:
                 partidos.append(partido)
+        if partidos:
+            return partidos
 
+    # ── Fallback: GitHub ──
+    try:
+        df = cargar_results_git()
+        if df.empty:
+            return ["No se encontraron partidos del Mundial."]
+        futuros = df[(df['date'] >= hoy) & df['tournament'].str.lower().str.contains('world cup', na=False)]
+        if futuros.empty:
+            futuros = df[df['date'] >= hoy]
+        partidos = []
+        for _, row in futuros.sort_values('date').iterrows():
+            partido = f"{row['home_team']} vs {row['away_team']}"
+            if partido not in partidos:
+                partidos.append(partido)
         return partidos if partidos else ["No se encontraron partidos del Mundial."]
     except Exception:
         return ["Error de red"]
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=1800)
 def obtener_todos_los_partidos_mundial():
-    """Todos los partidos del Mundial 2026 (pasados + futuros) para el batch completo."""
+    """Todos los partidos del Mundial 2026 (pasados + futuros) para el batch completo.
+    Prefiere el CSV local; cae en GitHub como respaldo.
+    """
+    # ── Fuente primaria: CSV local ──
+    df_local = cargar_fixture_local()
+    if not df_local.empty:
+        partidos = []
+        for _, row in df_local.sort_values('date').iterrows():
+            partido = f"{row['home_team']} vs {row['away_team']}"
+            if partido not in partidos:
+                partidos.append(partido)
+        if partidos:
+            return partidos
+
+    # ── Fallback: GitHub ──
     try:
         df = cargar_results_git()
         if df.empty:
@@ -426,9 +551,11 @@ if 'predicciones_generadas' not in st.session_state:
     st.session_state['predicciones_generadas'] = True
     st.rerun()  # Fuerza re-render para que el backtesting lea la DB ya poblada
 
-# Sincronizar resultados en cada carga (rápido: sólo DB + datos ya en caché)
+# Sincronizar resultados en cada carga usando CSV local (sin latencia de red)
+_df_local_sync = cargar_fixture_local()
 _df_results_sync = cargar_results_git()
 for _pid, _local, _visitante in obtener_partidos_sin_resultado():
+    _persistir_resultado_desde_local(_pid, _local, _visitante, _df_local_sync)
     _persistir_resultado_si_disponible(_pid, _local, _visitante, _df_results_sync)
 
 # ==========================================
