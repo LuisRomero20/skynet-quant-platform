@@ -274,7 +274,8 @@ def _generar_predicciones_fixture(lista_partidos, df_results, df_stats, dict_elo
                 mask_wc = (
                     ((df_results['home_team'] == local) & (df_results['away_team'] == visitante)) |
                     ((df_results['home_team'] == visitante) & (df_results['away_team'] == local))
-                ) & df_results['tournament'].str.lower().str.contains('world cup', na=False)
+                ) & df_results['tournament'].str.lower().str.contains('world cup', na=False) \
+                  & (df_results['date'] >= pd.Timestamp('2026-06-01'))
                 wc_matches = df_results[mask_wc]
                 if not wc_matches.empty:
                     fecha_partido = wc_matches.sort_values('date').iloc[0]['date'].strftime('%Y-%m-%d')
@@ -423,6 +424,7 @@ if 'predicciones_generadas' not in st.session_state:
     _todos_los_partidos = obtener_todos_los_partidos_mundial()
     _generar_predicciones_fixture(_todos_los_partidos, _df_results_batch, df_stats, dict_elo)
     st.session_state['predicciones_generadas'] = True
+    st.rerun()  # Fuerza re-render para que el backtesting lea la DB ya poblada
 
 # Sincronizar resultados en cada carga (rápido: sólo DB + datos ya en caché)
 _df_results_sync = cargar_results_git()
