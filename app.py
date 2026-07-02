@@ -30,6 +30,8 @@ from core.database import (
     tiene_resultado,
     obtener_predicciones_auditoria,
     obtener_partidos_sin_resultado,
+    necesita_rebuild_db,
+    limpiar_db_completa,
 )
 from core.backtesting import ejecutar_backtesting
 
@@ -542,6 +544,12 @@ lista_partidos = obtener_partidos_mundial_futuros()
 modelo_ml_data = cargar_o_entrenar_cerebro_ml()
 modelo_ml = modelo_ml_data['model'] if modelo_ml_data is not None else None
 modelo_ml_accuracy = modelo_ml_data.get('accuracy') if modelo_ml_data is not None else None
+
+# ── Auto-limpieza: si la DB tiene entradas inválidas (fechas viejas, nombres
+# sin traducir, duplicados por cambio de diccionario) se borra y regenera todo.
+if necesita_rebuild_db():
+    limpiar_db_completa()
+    st.session_state.pop('predicciones_generadas', None)
 
 # Generar predicciones para TODO el fixture del Mundial al arrancar (solo una vez por sesión)
 if 'predicciones_generadas' not in st.session_state:

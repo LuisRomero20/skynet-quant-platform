@@ -250,6 +250,69 @@ def obtener_estadisticas_basicas():
         conn.close()
 
 
+# Nombres en inglés o traducciones antiguas que no deberían estar en la DB.
+# Si algún partido tiene uno de estos nombres, la DB necesita un rebuild.
+_NOMBRES_INVALIDOS = {
+    'Norway', 'Sweden', 'Mexico', 'Switzerland', 'Algeria', 'Egypt',
+    'Scotland', 'Tunisia', 'Turkey', 'Qatar', 'Uzbekistan', 'Iraq',
+    'Jordan', 'Haiti', 'Bosnia and Herzegovina', 'Bosnia Herzegovina',
+    'Czech Republic', 'República Checa', 'USMNT', 'France', 'Germany',
+    'England', 'Spain', 'Brazil', 'Japan', 'Belgium', 'Croatia',
+    'Netherlands', 'Morocco', 'Canada', 'South Korea', 'South Africa',
+    'Ivory Coast', 'Cape Verde Islands', 'Saudi Arabia', 'New Zealand',
+    'Iran', 'Congo DR', 'DR Congo',
+}
+
+
+def necesita_rebuild_db() -> bool:
+    """Devuelve True si la DB contiene entradas inválidas que requieren un rebuild completo."""
+    crear_esquema()
+    conn = sqlite3.connect(_get_db_path())
+    try:
+        # 1. Entradas fuera del rango del Mundial 2026
+        fuera_rango = conn.execute(
+            "SELECT COUNT(*) FROM partidos WHERE fecha < '2026-06-01' OR fecha > '2026-07-20'"
+        ).fetchone()[0]
+        if fuera_rango > 0:
+            return True
+
+        # 2. Equipos con nombres no normalizados (inglés o traducciones antiguas)
+        for nombre in _NOMBRES_INVALIDOS:
+            hay = conn.execute(
+                "SELECT 1 FROM partidos WHERE local=? OR visitante=? LIMIT 1",
+                (nombre, nombre),
+            ).fetchone()
+            if hay:
+                return True
+
+        # 3. Duplicados: mismo (local, visitante) aparece más de una vez
+        duplicados = conn.execute(
+            """SELECT COUNT(*) FROM (
+                SELECT local, visitante FROM partidos
+                GROUP BY local, visitante HAVING COUNT(*) > 1
+            )"""
+        ).fetchone()[0]
+        if duplicados > 0:
+            return True
+
+        return False
+    finally:
+        conn.close()
+
+
+def limpiar_db_completa() -> None:
+    """Borra todos los registros de partidos, predicciones y resultados."""
+    crear_esquema()
+    conn = sqlite3.connect(_get_db_path())
+    try:
+        conn.execute("DELETE FROM resultados")
+        conn.execute("DELETE FROM predicciones")
+        conn.execute("DELETE FROM partidos")
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def obtener_estadisticas_predicciones():
     crear_esquema()
     conn = sqlite3.connect(_get_db_path())
