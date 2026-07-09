@@ -1,98 +1,98 @@
 Team,Elo
-Francia,1945.93
-Argentina,1925.9
-España,1869.59
-Inglaterra,1857.66
-Brasil,1833.39
-Marruecos,1800.96
-México,1800.86
-Países Bajos,1787.49
-Bélgica,1755.26
-Portugal,1752.46
-Colombia,1750.75
-Croacia,1725.21
+Francia,1925.86
+Argentina,1925.15
+España,1912.34
+Inglaterra,1871.39
+Brasil,1804.92
+Marruecos,1803.99
+Portugal,1787.85
+Bélgica,1778.36
+Países Bajos,1775.54
+México,1754.30
+Colombia,1739.89
+Alemania,1726.22
+Croacia,1723.05
+Suiza,1710.88
 Italia,1704.73
-EE. UU.,1695.74
-Alemania,1691.76
-Suiza,1691.35
-Noruega,1676.27
-Japón,1660.65
+EE. UU.,1690.33
+Japón,1673.68
+Senegal,1653.43
+Noruega,1651.29
+Uruguay,1634.70
 Dinamarca,1619.47
-Egipto,1606.59
-Senegal,1603.78
-RI de Irán,1600.51
-Austria,1599.84
-Uruguay,1592.4
-Australia,1586.79
+RI de Irán,1609.85
+Austria,1598.82
+Egipto,1597.04
+Ecuador,1592.59
 Nigeria,1585.02
-Argelia,1583.33
-Canadá,1579.22
-Ecuador,1572.03
-Paraguay,1571.49
-Turquía,1566.25
-Costa de Marfil,1564.21
+Turquía,1582.54
+Australia,1581.51
+Argelia,1576.80
+Canadá,1571.34
+Costa de Marfil,1565.47
+República de Corea,1558.72
 Ucrania,1549.29
-Suecia,1541.2
-Rusia,1529.6
+Paraguay,1542.48
+Rusia,1529.60
 Polonia,1526.18
-República de Corea,1525.24
+Suecia,1525.58
 Gales,1516.95
-RD Congo,1515.0
 Hungría,1506.39
 Serbia,1502.13
-Escocia,1485.77
+RD Congo,1495.48
+Escocia,1491.22
 Camerún,1481.24
+Panamá,1478.41
 Eslovaquia,1473.66
 Grecia,1473.19
 Venezuela,1469.18
-Sudáfrica,1458.92
-Chile,1458.2
+Chequia,1467.26
+Chile,1458.20
 Perú,1457.69
 Costa Rica,1456.03
 Rumanía,1455.89
 Mali,1455.59
-Islas de Cabo Verde,1443.57
-República de Irlanda,1441.1
+Sudáfrica,1451.24
+República de Irlanda,1441.10
 Eslovenia,1441.09
-Ghana,1439.67
-Arabia Saudí,1437.21
-Chequia,1437.1
-Bosnia y Herzegovina,1427.96
-Panamá,1424.82
+Túnez,1426.58
+Arabia Saudí,1425.52
+Catar,1411.06
+Uzbekistán,1409.73
+Bosnia y Herzegovina,1408.93
 Burkina Faso,1406.99
-Túnez,1388.9
-Catar,1380.8
+Irak,1404.17
+Islas de Cabo Verde,1402.97
+Ghana,1387.00
 Honduras,1378.97
 Albania,1376.03
-Irak,1374.99
-Uzbekistán,1373.23
 Emiratos Árabes Unidos,1370.47
 Macedonia del Norte,1369.16
-Irlanda del Norte,1365.3
+Irlanda del Norte,1365.30
 Jamaica,1357.84
 Georgia,1355.26
+Jordania,1350.41
 Islandia,1342.77
 Finlandia,1341.92
-Israel,1333.9
-Bolivia,1326.0
-Jordania,1324.36
+Israel,1333.90
+Bolivia,1326.00
 Kosovo,1319.12
-Omán,1306.9
+Omán,1306.90
 Montenegro,1301.98
-Guinea,1295.6
-Curazao,1291.11
+Guinea,1295.60
+Curazao,1285.64
 Siria,1283.05
-Nueva Zelanda,1279.33
 Gabón,1272.51
 Bulgaria,1271.68
+Nueva Zelanda,1269.80
 Angola,1265.58
+Haití,1264.58
 Uganda,1264.09
 Zambia,1255.82
 RP China,1254.81
 Baréin,1254.41
 Benín,1252.17
-Tailandia,1250.8
-Haití,1246.96
+Tailandia,1250.80
 Palestina,1243.71
 Bielorrusia,1242.88
 Guatemala,1238.74
@@ -103,7 +103,7 @@ Tayikistán,1224.19
 Trinidad y Tobago,1219.59
 Mozambique,1218.62
 Madagascar,1202.69
-Guinea Ecuatorial,1195.2
+Guinea Ecuatorial,1195.20
 Kirguizistán,1192.16
 Armenia,1189.63
 Comoras,1187.91
@@ -124,7 +124,7 @@ Sierra Leona,1147.56
 Islas Feroe,1136.59
 Chipre,1133.25
 Surinam,1132.43
-Azerbaiyán,1132.0
+Azerbaiyán,1132.00
 Estonia,1130.64
 Ruanda,1126.62
 Malaui,1122.05
@@ -142,7 +142,7 @@ Liberia,1080.44
 Turkmenistán,1078.65
 Burundi,1078.01
 Etiopía,1077.52
-República Dominicana,1076.5
+República Dominicana,1076.50
 Yemen,1065.24
 Lesoto,1064.29
 Botsuana,1063.63
@@ -152,7 +152,7 @@ Guyana,1049.32
 Nueva Caledonia,1036.95
 San Cristóbal y Nieves,1036.33
 Islas Salomón,1031.89
-Puerto Rico,1024.3
+Puerto Rico,1024.30
 Fiyi,1024.17
 Hong Kong,1024.16
 Tahití,1019.04
@@ -166,7 +166,7 @@ Cuba,981.42
 Suazilandia,979.01
 Santa Lucía,976.71
 Bermuda,975.05
-Papúa Nueva Guinea,974.9
+Papúa Nueva Guinea,974.90
 Sudán del Sur,970.94
 San Vicente y las Granadinas,968.27
 Afganistán,968.07
@@ -178,7 +178,7 @@ Montserrat,916.75
 Nepal,914.54
 Mauricio,911.49
 Barbados,909.89
-Belice,907.0
+Belice,907.00
 Bangladés,902.93
 Dominica,897.69
 Chad,896.85
@@ -199,14 +199,14 @@ Islas Caimán,850.06
 Pakistán,840.28
 Somalia,839.17
 Tonga,835.64
-Timor Oriental,831.0
+Timor Oriental,831.00
 Gibraltar,820.26
 Guam,819.54
 Seychelles,804.16
 Islas Turcas y Caicos,803.98
-Liechtenstein,797.7
+Liechtenstein,797.70
 Bahamas,786.82
 Islas Vírgenes Estadounidenses,779.76
 Islas Vírgenes Británicas,777.41
 Anguilla,760.25
-San Marino,721.2
+San Marino,721.20
