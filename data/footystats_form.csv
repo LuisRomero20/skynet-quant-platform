@@ -1,14 +1,14 @@
 Country,P,xG,Corners,Cards,PPG
-Switzerland National Team,5,1.53,26,6,2.2
+Switzerland National Team,6,1.51,28,8,1.83
 Austria National Team,4,0.98,10,5,1.0
-Spain National Team,5,2.19,39,3,2.6
+Spain National Team,7,2.02,45,6,2.71
 Portugal National Team,5,1.4,22,7,1.6
-Norway National Team,5,1.36,22,2,2.4
+Norway National Team,6,1.39,29,3,2.0
 Germany National Team,4,2.29,34,3,1.75
-England National Team,5,1.88,31,9,2.6
-Belgium National Team,5,2.28,23,6,2.2
+England National Team,6,1.88,35,9,2.67
+Belgium National Team,6,2.01,24,8,1.83
 Netherlands National Team,4,1.53,18,3,2.0
-France National Team,5,2.15,36,4,3.0
+France National Team,7,2.04,48,6,2.57
 Croatia National Team,4,1.16,12,4,1.5
 Scotland National Team,3,1.06,12,5,1.0
 Japan National Team,4,1.03,13,4,1.25
@@ -20,7 +20,7 @@ Iran National Team,3,1.32,8,6,1.0
 Uzbekistan National Team,3,0.74,9,4,0.0
 South Korea National Team,3,1.35,12,4,1.0
 Ivory Coast National Team,4,1.38,26,4,1.5
-Argentina National Team,5,1.78,23,3,3.0
+Argentina National Team,6,1.88,31,6,3.0
 Uruguay National Team,3,1.82,26,7,0.67
 Ecuador National Team,4,1.62,25,10,1.0
 Ghana National Team,4,0.62,8,6,1.0
@@ -35,7 +35,7 @@ South Africa National Team,4,1.02,11,9,1.0
 Haiti National Team,3,1.05,9,7,0.0
 Curaao National Team,3,0.97,5,7,0.33
 Paraguay National Team,5,0.73,10,11,1.0
-Morocco National Team,5,1.48,25,6,2.2
+Morocco National Team,6,1.34,30,7,1.83
 Egypt National Team,5,1.42,26,12,1.2
 Tunisia National Team,3,0.73,9,1,0.0
 Panama National Team,3,1.18,12,5,0.0
