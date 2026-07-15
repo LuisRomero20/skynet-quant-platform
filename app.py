@@ -63,13 +63,13 @@ st.divider()
 # ==========================================
 # 1. CARGA DE DATOS Y MODELOS
 # ==========================================
-@st.cache_data
+@st.cache_data(ttl=1800)
 def cargar_footystats():
     ruta = os.path.join(ROOT_DIR, 'data', 'footystats_form.csv')
     if os.path.exists(ruta): return pd.read_csv(ruta)
     return None
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def cargar_datos_elo():
     ruta = os.path.join(ROOT_DIR, 'data', 'rankings_elo.csv')
     if os.path.exists(ruta):
@@ -82,7 +82,7 @@ def cargar_datos_elo():
         return {}
     return {}
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def cargar_fixture_local():
     """Carga el fixture completo del Mundial 2026 desde el CSV local de FootyStats.
     Retorna un DataFrame con columnas: date, home_team, away_team, home_score, away_score, status.
@@ -106,7 +106,7 @@ def cargar_fixture_local():
     except Exception:
         return pd.DataFrame()
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def normalizar_country_footystats(country_name):
     if country_name is None:
         return ''
@@ -375,7 +375,7 @@ def cargar_results_git():
     except Exception:
         return pd.DataFrame()
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def cargar_goalscorers_git():
     try:
         url_goals = "https://raw.githubusercontent.com/martj42/international_results/refs/heads/master/goalscorers.csv"
@@ -390,7 +390,7 @@ def cargar_goalscorers_git():
     except Exception:
         return pd.DataFrame()
 
-@st.cache_data
+@st.cache_data(ttl=1800)
 def cargar_partidos_mundial_historicos():
     """Retorna todos los partidos del Mundial con resultado.
     Usa el CSV local como fuente primaria (más actualizado) y complementa con GitHub.
